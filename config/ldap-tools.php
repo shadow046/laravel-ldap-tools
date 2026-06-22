@@ -23,6 +23,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | HTTP Routes
+    |--------------------------------------------------------------------------
+    |
+    | These routes expose LDAP lookup/listing over HTTP. Keep auth middleware
+    | enabled unless you are placing these routes behind another trusted layer.
+    |
+    */
+
+    'routes' => [
+        'enabled' => filter_var(env('LDAP_TOOLS_ROUTES_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+        'prefix' => env('LDAP_TOOLS_ROUTE_PREFIX', 'ldap-tools'),
+        'middleware' => array_filter(explode(',', env('LDAP_TOOLS_ROUTE_MIDDLEWARE', 'web,auth'))),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Profile Fields
     |--------------------------------------------------------------------------
     |
