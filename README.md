@@ -46,6 +46,7 @@ Installer options:
 ```bash
 php artisan ldap-tools:install --force
 php artisan ldap-tools:install --no-sample
+php artisan ldap-tools:install --controller
 ```
 
 ## Environment
@@ -63,6 +64,7 @@ LDAP_LOGGING=false
 LDAP_TOOLS_ROUTES_ENABLED=true
 LDAP_TOOLS_ROUTE_PREFIX=ldap-tools
 LDAP_TOOLS_ROUTE_MIDDLEWARE=web,auth
+LDAP_TOOLS_ROUTE_CONTROLLER=Ideaserv\LdapTools\Http\Controllers\LdapUserController
 ```
 
 ## Commands
@@ -158,6 +160,7 @@ Default route settings:
 LDAP_TOOLS_ROUTES_ENABLED=true
 LDAP_TOOLS_ROUTE_PREFIX=ldap-tools
 LDAP_TOOLS_ROUTE_MIDDLEWARE=web,auth
+LDAP_TOOLS_ROUTE_CONTROLLER=Ideaserv\LdapTools\Http\Controllers\LdapUserController
 ```
 
 Keep auth middleware enabled unless these routes are behind another trusted access layer.
@@ -193,6 +196,39 @@ JSON list response:
   },
   "ldap_error": null
 }
+```
+
+### Publishing an App Controller
+
+By default, the routes use the controller inside the package:
+
+```text
+vendor/shadow046/laravel-ldap-tools/src/Http/Controllers/LdapUserController.php
+```
+
+If you want a controller you can edit inside your Laravel project, publish one:
+
+```bash
+php artisan ldap-tools:install --controller
+```
+
+This creates:
+
+```text
+app/Http/Controllers/LdapTools/LdapUserController.php
+```
+
+Then point the package routes to your app controller:
+
+```env
+LDAP_TOOLS_ROUTE_CONTROLLER=App\Http\Controllers\LdapTools\LdapUserController
+```
+
+Clear cached config/routes after changing it:
+
+```bash
+php artisan config:clear
+php artisan route:clear
 ```
 
 ## Sample Login Trait
