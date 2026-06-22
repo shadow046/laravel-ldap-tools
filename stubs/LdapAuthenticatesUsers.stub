@@ -1,0 +1,115 @@
+<?php
+
+namespace App\Support;
+
+use App\User;
+use Ideaserv\LdapTools\Services\LdapService;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+
+trait LdapAuthenticatesUsers
+{
+    /**
+     * Authenticate using LDAP and return the local application user.
+     *
+     * Adjust the User model namespace when your app uses App\Models\User.
+     */
+    protected function authenticateWithLdap($login, $password)
+    {
+        /** @var LdapService $ldap */
+        $ldap = app(LdapService::class);
+        $profile = $ldap->authenticate($login, $password);
+
+        if ($profile === null) {
+            return null;
+        }
+
+        $user = $this->findUserFromLdapProfile($profile);
+
+        if (! $user) {
+            $user = $this->createUserFromLdapProfile($profile);
+        }
+
+        Auth::login($user);
+
+        return $user;
+    }
+
+    protected function findUserFromLdapProfile(array $profile)
+    {
+        $empnoCandidates = $this->filledUnique([
+            isset($profile['employee_id']) ? $profile['employee_id'] : null,
+            isset($profile['employee_number']) ? $profile['employee_number'] : null,
+        ]);
+        $emailCandidates = $this->filledUnique([
+            isset($profile['mail']) ? $profile['mail'] : null,
+            isset($profile['user_principal_name']) ? $profile['user_principal_name'] : null,
+            ! empty($profile['user_principal_id']) ? $profile['user_principal_id'].'@timelogs.local' : null,
+            ! empty($profile['samaccount_name']) ? $profile['samaccount_name'].'@timelogs.local' : null,
+        ]);
+
+        return User::query()
+            ->where(function ($query) use ($empnoCandidates, $emailCandidates) {
+                foreach ($empnoCandidates as $empno) {
+                    $query->orWhere('empno', $empno);
+                }
+
+                foreach ($emailCandidates as $email) {
+                    $query->orWhere('email', $email);
+                }
+            })
+            ->first();
+    }
+
+    protected function createUserFromLdapProfile(array $profile)
+    {
+        $empno = $this->filledUnique([
+            isset($profile['employee_id']) ? $profile['employee_id'] : null,
+            isset($profile['employee_number']) ? $profile['employee_number'] : null,
+        ]);
+        $email = $this->filledUnique([
+            isset($profile['mail']) ? $profile['mail'] : null,
+            isset($profile['user_principal_name']) ? $profile['user_principal_name'] : null,
+            ! empty($profile['user_principal_id']) ? $profile['user_principal_id'].'@timelogs.local' : null,
+            ! empty($profile['samaccount_name']) ? $profile['samaccount_name'].'@timelogs.local' : null,
+        ]);
+        $name = $this->filledUnique([
+            isset($profile['display_name']) ? $profile['display_name'] : null,
+            trim((isset($profile['given_name']) ? $profile['given_name'] : '').' '.(isset($profile['surname']) ? $profile['surname'] : '')),
+            isset($profile['cn']) ? $profile['cn'] : null,
+            isset($profile['user_principal_id']) ? $profile['user_principal_id'] : null,
+            isset($profile['samaccount_name']) ? $profile['samaccount_name'] : null,
+        ]);
+
+        return User::create([
+            'empno' => isset($empno[0]) ? $empno[0] : null,
+            'name' => isset($name[0]) ? $name[0] : 'LDAP User',
+            'email' => isset($email[0]) ? $email[0] : strtolower((string) Str::uuid()).'@ldap.local',
+            'password' => bcrypt(Str::random(64)),
+        ]);
+    }
+
+    protected function filledUnique(array $values)
+    {
+        $seen = [];
+        $result = [];
+
+        foreach ($values as $value) {
+            if (! is_string($value) || trim($value) === '') {
+                continue;
+            }
+
+            $value = trim($value);
+            $key = strtolower($value);
+
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
+            $result[] = $value;
+        }
+
+        return $result;
+    }
+}
