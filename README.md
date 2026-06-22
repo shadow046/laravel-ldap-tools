@@ -60,6 +60,9 @@ LDAP_SSL=true
 LDAP_TLS=false
 LDAP_TIMEOUT=5
 LDAP_LOGGING=false
+LDAP_TOOLS_ROUTES_ENABLED=true
+LDAP_TOOLS_ROUTE_PREFIX=ldap-tools
+LDAP_TOOLS_ROUTE_MIDDLEWARE=web,auth
 ```
 
 ## Commands
@@ -144,6 +147,53 @@ For app identity, match local users in this order:
 3. `mail`
 4. `user_principal_id`
 5. `samaccount_name`
+
+## HTTP Controller
+
+The package includes optional HTTP routes for LDAP lookup/listing.
+
+Default route settings:
+
+```env
+LDAP_TOOLS_ROUTES_ENABLED=true
+LDAP_TOOLS_ROUTE_PREFIX=ldap-tools
+LDAP_TOOLS_ROUTE_MIDDLEWARE=web,auth
+```
+
+Keep auth middleware enabled unless these routes are behind another trusted access layer.
+
+Endpoints:
+
+```http
+GET /ldap-tools/users
+GET /ldap-tools/users?search=jolopez
+GET /ldap-tools/users?limit=50&page_size=500
+GET /ldap-tools/users?format=csv
+GET /ldap-tools/users/jolopez.id
+GET /ldap-tools/users/jolopez@ideaserv.com.ph
+```
+
+JSON list response:
+
+```json
+{
+  "data": [
+    {
+      "samaccount_name": "jolopez.id",
+      "mail": "jolopez@ideaserv.com.ph",
+      "user_principal_id": "jolopez.id",
+      "display_name": "Jerome Lopez"
+    }
+  ],
+  "meta": {
+    "count": 1,
+    "limit": 50,
+    "page_size": 500,
+    "search": "jolopez"
+  },
+  "ldap_error": null
+}
+```
 
 ## Sample Login Trait
 
