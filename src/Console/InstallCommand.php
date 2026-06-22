@@ -37,12 +37,22 @@ class InstallCommand extends Command
         $this->line('LDAP_TLS=false');
         $this->line('LDAP_TIMEOUT=5');
         $this->line('LDAP_LOGGING=false');
+        $this->line('LDAP_TOOLS_ROUTES_ENABLED=true');
+        $this->line('LDAP_TOOLS_ROUTE_PREFIX=ldap-tools');
+        $this->line('LDAP_TOOLS_ROUTE_MIDDLEWARE=web,auth');
 
         $this->newLine();
         $this->info('Then clear config and test LDAP:');
         $this->line('php artisan config:clear');
         $this->line('php artisan ldap:find jolopez.id');
         $this->line('php artisan ldap:list-users --limit=5');
+
+        $this->newLine();
+        $this->info('Optional HTTP endpoints after login/auth middleware:');
+        $this->line('GET /ldap-tools/users');
+        $this->line('GET /ldap-tools/users?search=jolopez');
+        $this->line('GET /ldap-tools/users?format=csv');
+        $this->line('GET /ldap-tools/users/jolopez.id');
 
         $this->newLine();
         $this->info('To wire login, inspect: app/Support/LdapAuthenticatesUsers.php');
