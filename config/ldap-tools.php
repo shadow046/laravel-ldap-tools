@@ -35,6 +35,7 @@ return [
         'enabled' => filter_var(env('LDAP_TOOLS_ROUTES_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
         'prefix' => env('LDAP_TOOLS_ROUTE_PREFIX', 'ldap-tools'),
         'middleware' => array_filter(explode(',', env('LDAP_TOOLS_ROUTE_MIDDLEWARE', 'web,auth'))),
+        'controller' => env('LDAP_TOOLS_ROUTE_CONTROLLER', 'Ideaserv\LdapTools\Http\Controllers\LdapUserController'),
     ],
 
     /*
