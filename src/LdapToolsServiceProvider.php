@@ -24,6 +24,10 @@ class LdapToolsServiceProvider extends ServiceProvider
 
     public function boot()
     {
+        if (config('ldap-tools.routes.enabled', true)) {
+            $this->loadRoutesFrom(__DIR__.'/../routes/ldap-tools.php');
+        }
+
         if (function_exists('config_path')) {
             $this->publishes([
                 __DIR__.'/../config/ldap-tools.php' => config_path('ldap-tools.php'),
